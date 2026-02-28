@@ -2,8 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ToolLayout } from "@/components/ToolLayout";
 import { Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const sentences = [
+const englishSentences = [
   "The quick brown fox jumps over the lazy dog near the riverbank.",
   "Pack my box with five dozen liquor jugs for the evening party.",
   "A journey of a thousand miles begins with a single brave step.",
@@ -11,8 +18,21 @@ const sentences = [
   "Success is not final and failure is not fatal keep going forward.",
 ];
 
+const nepaliSentences = [
+  "नेपाल एक सुन्दर देश हो जहाँ हिमालय र तराई दुवै छन्।",
+  "शिक्षा जीवनको सबैभन्दा महत्त्वपूर्ण कुरा हो भन्ने कुरामा कसैको दुईमत छैन।",
+  "काठमाडौं नेपालको राजधानी हो र यो एक ऐतिहासिक सहर हो।",
+  "मेहनत गर्ने मानिसले सधैँ सफलता पाउँछ भन्ने कुरा सत्य हो।",
+  "हाम्रो देशको संस्कृति र परम्परा अत्यन्त समृद्ध र विविधतापूर्ण छ।",
+];
+
+type Language = "english" | "nepali";
+
 export default function TypingTest() {
-  const [text] = useState(() => sentences[Math.floor(Math.random() * sentences.length)]);
+  const [language, setLanguage] = useState<Language>("english");
+  const [text, setText] = useState(() =>
+    englishSentences[Math.floor(Math.random() * englishSentences.length)]
+  );
   const [input, setInput] = useState("");
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -21,28 +41,44 @@ export default function TypingTest() {
   const [accuracy, setAccuracy] = useState(100);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleInput = useCallback((val: string) => {
-    if (!started) {
-      setStarted(true);
-      setStartTime(Date.now());
-    }
-    setInput(val);
-    // Calculate accuracy
-    let correct = 0;
-    for (let i = 0; i < val.length; i++) {
-      if (val[i] === text[i]) correct++;
-    }
-    setAccuracy(val.length > 0 ? Math.round((correct / val.length) * 100) : 100);
+  const switchLanguage = (lang: Language) => {
+    setLanguage(lang);
+    const sentences = lang === "english" ? englishSentences : nepaliSentences;
+    setText(sentences[Math.floor(Math.random() * sentences.length)]);
+    setInput("");
+    setStarted(false);
+    setFinished(false);
+    setWpm(0);
+    setAccuracy(100);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
 
-    if (val.length >= text.length) {
-      const elapsed = (Date.now() - (startTime || Date.now())) / 1000 / 60;
-      const words = text.split(" ").length;
-      setWpm(Math.round(words / (elapsed || 1)));
-      setFinished(true);
-    }
-  }, [started, startTime, text]);
+  const handleInput = useCallback(
+    (val: string) => {
+      if (!started) {
+        setStarted(true);
+        setStartTime(Date.now());
+      }
+      setInput(val);
+      let correct = 0;
+      for (let i = 0; i < val.length; i++) {
+        if (val[i] === text[i]) correct++;
+      }
+      setAccuracy(val.length > 0 ? Math.round((correct / val.length) * 100) : 100);
+
+      if (val.length >= text.length) {
+        const elapsed = (Date.now() - (startTime || Date.now())) / 1000 / 60;
+        const words = text.split(" ").length;
+        setWpm(Math.round(words / (elapsed || 1)));
+        setFinished(true);
+      }
+    },
+    [started, startTime, text]
+  );
 
   const reset = () => {
+    const sentences = language === "english" ? englishSentences : nepaliSentences;
+    setText(sentences[Math.floor(Math.random() * sentences.length)]);
     setInput("");
     setStarted(false);
     setFinished(false);
@@ -65,13 +101,30 @@ export default function TypingTest() {
   return (
     <ToolLayout title="Typing Speed Test" description="Test your typing speed" icon={Keyboard}>
       <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Language:</span>
+          <Select value={language} onValueChange={(v) => switchLanguage(v as Language)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="english">English</SelectItem>
+              <SelectItem value="nepali">नेपाली (Preeti)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="rounded-md bg-secondary p-4 font-mono text-sm leading-relaxed">
           {text.split("").map((char, i) => {
             let cls = "text-muted-foreground";
             if (i < input.length) {
               cls = input[i] === char ? "text-primary" : "text-destructive underline";
             }
-            return <span key={i} className={cls}>{char}</span>;
+            return (
+              <span key={i} className={cls}>
+                {char}
+              </span>
+            );
           })}
         </div>
 
@@ -79,7 +132,7 @@ export default function TypingTest() {
           ref={inputRef}
           value={input}
           onChange={(e) => !finished && handleInput(e.target.value)}
-          placeholder="Start typing here..."
+          placeholder={language === "english" ? "Start typing here..." : "यहाँ टाइप गर्नुहोस्..."}
           className="w-full resize-none rounded-md border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           rows={3}
           disabled={finished}
@@ -98,7 +151,9 @@ export default function TypingTest() {
         </div>
 
         {finished && (
-          <Button onClick={reset} className="w-full">Try Again</Button>
+          <Button onClick={reset} className="w-full">
+            Try Again
+          </Button>
         )}
       </div>
     </ToolLayout>
