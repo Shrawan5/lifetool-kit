@@ -1,6 +1,7 @@
 import { Tool, Category } from "@/lib/tools";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { recordToolUsage } from "@/pages/Index";
 
 const catColor: Record<Category, string> = {
   productivity: "bg-cat-productivity/15 text-cat-productivity border-cat-productivity/30",
@@ -50,7 +51,7 @@ export function ToolCard({ tool, index }: { tool: Tool; index: number }) {
   );
 
   if (tool.ready) {
-    return <Link to={`/tool/${tool.id}`}>{content}</Link>;
+    return <Link to={`/tool/${tool.id}`} onClick={() => recordToolUsage(tool.id)}>{content}</Link>;
   }
   return content;
 }
