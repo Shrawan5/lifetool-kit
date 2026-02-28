@@ -28,6 +28,34 @@ const nepaliSentences = [
 
 type Language = "english" | "nepali";
 
+const preetiToUnicode: Record<string, string> = {
+  "a": "ब", "b": "द", "c": "अ", "d": "म", "e": "भ", "f": "ा", "g": "न",
+  "h": "ज", "i": "ष", "j": "व", "k": "प", "l": "ि", "m": "स", "n": "ल",
+  "o": "य", "p": "उ", "q": "त", "r": "च", "s": "क", "t": "ट", "u": "ग",
+  "v": "ख", "w": "ध", "x": "ह", "y": "थ", "z": "श",
+  "A": "ब्", "B": "ड", "C": "आ", "D": "म्", "E": "भ्", "F": "ँ", "G": "ं",
+  "H": "झ", "I": "क्ष", "J": "ओ", "K": "फ", "L": "ी", "M": "ष", "N": "ळ",
+  "O": "इ", "P": "ऊ", "Q": "त्", "R": "छ", "S": "क्", "T": "ठ", "U": "घ",
+  "V": "ढ", "W": "ध्", "X": "ँ", "Y": "ठ्", "Z": "श्",
+  "0": "०", "1": "१", "2": "२", "3": "३", "4": "४",
+  "5": "५", "6": "६", "7": "७", "8": "८", "9": "९",
+  ")": "ण", "!": "ज्ञ", "@": "ई", "#": "घ्", "$": "द्द",
+  "%": "छ्", "^": "ट्", "&": "ड्", "*": "द्ध", "(": "ञ",
+  "/": "र", "\\": "्", "]": "े", "}": "ै", "[": "ु", "{": "ू",
+  ";": "स्", ":": "ट्ट", "'": "ु", "\"": "ू",
+  ",": ",", "<": "?", ".": "।", ">": "श्र",
+  "`": "ञ", "~": "त्र",
+  " ": " ", "\n": "\n",
+};
+
+function convertPreetiToUnicode(preetiText: string): string {
+  let result = "";
+  for (const char of preetiText) {
+    result += preetiToUnicode[char] || char;
+  }
+  return result;
+}
+
 export default function TypingTest() {
   const [language, setLanguage] = useState<Language>("english");
   const [text, setText] = useState(() =>
@@ -138,6 +166,13 @@ export default function TypingTest() {
           disabled={finished}
           autoFocus
         />
+
+        {language === "nepali" && input.length > 0 && (
+          <div className="rounded-md border border-border bg-muted/50 p-3">
+            <p className="text-xs font-medium text-muted-foreground mb-1">नेपाली Preview:</p>
+            <p className="text-sm leading-relaxed text-foreground">{convertPreetiToUnicode(input)}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-md bg-secondary p-3 text-center">
