@@ -1,19 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { tools, categoryLabels, type Category } from "@/lib/tools";
 import { ToolCard } from "@/components/ToolCard";
 import { Input } from "@/components/ui/input";
 import { Search, Wrench } from "lucide-react";
+
+const RECENT_KEY = "lifekit-recent-tools";
+
+function getRecentIds(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordToolUsage(toolId: string) {
+  const recent = getRecentIds().filter((id) => id !== toolId);
+  recent.unshift(toolId);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, 30)));
+}
 
 const categories: Category[] = ["productivity", "finance", "learning", "self", "utility", "ai", "wellness"];
 
 const Index = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Category | "all">("all");
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRecentIds(getRecentIds());
+  }, []);
 
   const filtered = tools.filter((t) => {
     const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.description.toLowerCase().includes(search.toLowerCase());
     const matchCat = filter === "all" || t.category === filter;
     return matchSearch && matchCat;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    const ai = recentIds.indexOf(a.id);
+    const bi = recentIds.indexOf(b.id);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return 0;
   });
 
   return (
@@ -55,7 +86,7 @@ const Index = () => {
 
         {/* Grid */}
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((tool, i) => (
+          {sorted.map((tool, i) => (
             <ToolCard key={tool.id} tool={tool} index={i} />
           ))}
         </div>
